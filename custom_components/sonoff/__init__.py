@@ -133,6 +133,7 @@ async def async_setup(hass: HomeAssistantType, hass_config: dict):
         auto_sensors = []
 
     def add_device(deviceid: str, state: dict, *args):
+        _LOGGER.debug(f"add device: {deviceid}")
         device = registry.devices[deviceid]
 
         # device with handlers already added

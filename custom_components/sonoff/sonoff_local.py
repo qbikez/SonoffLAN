@@ -131,6 +131,7 @@ class EWeLinkLocal:
     def start(self, handlers: List[Callable], devices: dict, zeroconf):
         self._handlers = handlers
         self._devices = devices
+        _LOGGER.debug(f"ewelink local start")
         self.browser = ServiceBrowser(zeroconf, '_ewelink._tcp.local.',
                                       handlers=[self._zeroconf_handler])
         # for beautiful logs
@@ -142,6 +143,7 @@ class EWeLinkLocal:
 
     def _zeroconf_handler(self, zeroconf: Zeroconf, service_type: str,
                           name: str, state_change: ServiceStateChange):
+        _LOGGER.debug(f"Zeroconf handler: {name}")
         if state_change == ServiceStateChange.Removed:
             _LOGGER.debug(f"Zeroconf Removed: {name}")
             # TTL of record 5 minutes
@@ -222,9 +224,9 @@ class EWeLinkLocal:
             for handler in self._handlers:
                 handler(deviceid, state, seq)
 
-        except:
-            _LOGGER.debug(
-                f"Problem while processing zeroconf: {service_type}, {name}")
+        except Exception as err:
+            _LOGGER.error(
+                f"Problem while processing zeroconf  {service_type}, {name}: {err}", exc_info=err)
 
     async def check_offline(self, deviceid: str):
         """Try to get response from device after received Zeroconf Removed."""

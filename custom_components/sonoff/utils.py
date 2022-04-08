@@ -28,6 +28,7 @@ async def get_zeroconf_singleton(hass: HomeAssistantType):
         from homeassistant.components.zeroconf import async_get_instance
         return await async_get_instance(hass)
     except:
+        _LOGGER.warn("failed to get zeroconf instance, creating a new one.")
         from zeroconf import Zeroconf
         return Zeroconf()
 
