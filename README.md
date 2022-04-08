@@ -150,13 +150,7 @@ These devices only work through the cloud!
 
 ## Install with HACS
 
-Latest [HACS](https://hacs.xyz/) require HA 0.110.0 or newer:
-
-![](demo_hacs1.gif)
-
-Old HACS:
-
-![](demo_hacs.gif)
+Use [HACS](https://hacs.xyz/) > Integrations > Plus > **SonoffLAN**.
 
 Or manually copy `sonoff` folder from [latest release](https://github.com/AlexxIT/SonoffLAN/releases/latest) to `custom_components` folder in your config folder.
 
@@ -253,6 +247,8 @@ sonoff:
     1000abcdefg:
       devicekey: f9765c85-463a-4623-9cbe-8d59266cb2e4
 ```
+
+See [Getting devicekey manually](https://github.com/AlexxIT/SonoffLAN#getting-devicekey-manually) to retrieve the devicekey.
 
 ### Local only mode (DIY devices)
 
@@ -571,6 +567,10 @@ Change **Name** or **Entity ID** of any device:
 4. Copy `deviceid` and `apikey` (this is `devicekey`)
 5. Connect to your Wi-Fi network and setup Sonoff via the eWeLink app
 
+**For Sonoff Micro**
+
+The process above does not work for the Sonoff Micro (USB Smart Adapter). Use [Local mode with load config from Cloud](https://github.com/AlexxIT/SonoffLAN#local-mode-with-load-config-from-cloud).
+
 ## Common problems in only LAN mode
 
 Cloud users don't have these problems.
@@ -588,6 +588,7 @@ Cloud users don't have these problems.
    - Oracle VM VirtualBox
    - linux firewall
    - linux network driver
+   - incorrect network interface selected in HA Configuration -> Settings -> Global -> Network
 
 The devices publish their data through [Multicast DNS](https://en.wikipedia.org/wiki/Multicast_DNS) (mDNS/[zeroconf](https://www.home-assistant.io/integrations/zeroconf/)), read [more](http://developers.sonoff.tech/sonoff-diy-mode-api-protocol.html#Device-mDNS-Service-Info-Publish-Process).
 

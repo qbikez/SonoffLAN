@@ -6,7 +6,8 @@ import time
 from typing import Optional, List, Callable
 
 from aiohttp import ClientSession
-from homeassistant.const import ATTR_BATTERY_LEVEL
+from homeassistant.const import ATTR_BATTERY_LEVEL, MAJOR_VERSION, \
+    MINOR_VERSION
 
 from .sonoff_cloud import EWeLinkCloud
 from .sonoff_local import EWeLinkLocal
@@ -14,7 +15,22 @@ from .sonoff_local import EWeLinkLocal
 _LOGGER = logging.getLogger(__name__)
 
 ATTRS = ('local', 'cloud', 'rssi', 'humidity', 'temperature', 'power',
-         'current', 'voltage', 'consumption', 'water', ATTR_BATTERY_LEVEL)
+         'current', 'voltage', 'consumption', 'water', ATTR_BATTERY_LEVEL,
+         'current_1', 'current_2', 'voltage_1', 'voltage_2',
+         'power_1', 'power_2')
+
+ATTRS_DUALR3 = {
+    'current_00': 'current_1',
+    'current_01': 'current_2',
+    'voltage_00': 'voltage_1',
+    'voltage_01': 'voltage_2',
+    'actPow_00': 'power_1',
+    'actPow_01': 'power_2',
+    # 'reactPow_00': 'react_power_1',
+    # 'reactPow_01': 'react_power_2',
+    # 'apparentPow_00': 'apparent_power_1',
+    # 'apparentPow_01': 'apparent_power_2',
+}
 
 
 def load_cache(filename: str):
@@ -32,6 +48,13 @@ def save_cache(filename: str, data: dict):
     """Save device list to file."""
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
+
+
+def fix_attrs(state: dict):
+    # fix R3 Pow attrs
+    for k, v in ATTRS_DUALR3.items():
+        if k in state:
+            state[v] = round(state[k] * 0.01, 2)
 
 
 def get_attrs(state: dict) -> dict:
@@ -89,6 +112,8 @@ class EWeLinkRegistry:
         if 'handlers' in device:
             # TODO: right place?
             device['available'] = device.get('online') or device.get('host')
+
+            fix_attrs(state)
 
             attrs = get_attrs(state)
             try:
@@ -201,7 +226,7 @@ class EWeLinkRegistry:
             self.bulk_params[deviceid]['switches'] += params['switches']
 
 
-class EWeLinkDevice:
+class EWeLinkBase:
     registry: EWeLinkRegistry = None
     deviceid: str = None
     channels: list = None
@@ -297,3 +322,36 @@ class EWeLinkDevice:
             for channel, switch in channels.items()
         ]
         await self.registry.send(self.deviceid, {'switches': switches})
+
+
+class EWeLinkEntity(EWeLinkBase):
+    @property
+    def should_poll(self):
+        return False
+
+    @property
+    def unique_id(self):
+        return self.deviceid
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def extra_state_attributes(self):
+        return self._attrs
+
+    @property
+    def available(self):
+        device: dict = self.registry.devices[self.deviceid]
+        return device['available']
+
+    async def async_added_to_hass(self):
+        self._init()
+
+
+if [MAJOR_VERSION, MINOR_VERSION] < [2021, 4]:
+    # Backwards compatibility for "device_state_attributes"
+    # deprecated in 2021.4, add warning in 2021.6, remove in 2021.10
+    p = getattr(EWeLinkEntity, 'extra_state_attributes')
+    setattr(EWeLinkEntity, 'device_state_attributes', p)
